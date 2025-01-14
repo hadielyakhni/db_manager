@@ -1,0 +1,32 @@
+_all_db() {
+    local opts
+    opts=($(ldb))  # Get the list of database options
+
+    # If opts is empty, provide a fallback
+    if [[ ${#opts[@]} -eq 0 ]]; then
+        opts=("")
+    fi
+
+    _describe 'databases' opts
+}
+
+compdef _all_db dropall
+compdef _all_db setdb
+compdef _all_db copydb
+
+_get_savepoints() {
+    local opts current_db
+    current_db=$(getdb)  # Get the current database
+    opts=($(ldb -a | grep "^${current_db}__" | sed 's/__/#/g' | cut -d'#' -f2))
+
+    # If opts is empty, provide a fallback
+    if [[ ${#opts[@]} -eq 0 ]]; then
+        opts=("")
+    fi
+
+    _describe 'savepoints' opts
+}
+
+compdef _get_savepoints restoredb
+compdef _get_savepoints savedb
+
