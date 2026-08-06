@@ -2,4 +2,15 @@
 
 filepath="$HOME/.current_db"
 
+root="$HOME/Dev/odoo"
+dir="$PWD"
+while [[ "$dir" == "$root" || "$dir" == "$root"/* ]]; do
+    if [ -f "$dir/.wtenv" ]; then
+        db=$(sed -n 's/^db=//p' "$dir/.wtenv")
+        [ -n "$db" ] && { echo "$db"; exit 0; }
+        break
+    fi
+    dir=$(dirname "$dir")
+done
+
 cat "$filepath"
