@@ -1,16 +1,21 @@
 #!/bin/bash
 
-filepath="$HOME/.current_db"
+ODOO_ROOT="$HOME/Dev/odoo"
+GLOBAL_DB="$HOME/.current_db"
+WS_SETTINGS=".wtenv"
 
-root="$HOME/Dev/odoo"
-dir="$PWD"
-while [[ "$dir" == "$root" || "$dir" == "$root"/* ]]; do
-    if [ -f "$dir/.wtenv" ]; then
-        db=$(sed -n 's/^db=//p' "$dir/.wtenv")
-        [ -n "$db" ] && { echo "$db"; exit 0; }
-        break
-    fi
-    dir=$(dirname "$dir")
-done
+workspace_settings_here() {
+    local dir="$PWD"
+    while [[ "$dir" == "$ODOO_ROOT" || "$dir" == "$ODOO_ROOT"/* ]]; do
+        [ -f "$dir/$WS_SETTINGS" ] && { echo "$dir/$WS_SETTINGS"; return 0; }
+        dir=$(dirname "$dir")
+    done
+    return 1
+}
 
-cat "$filepath"
+if settings=$(workspace_settings_here); then
+    db=$(sed -n 's/^db=//p' "$settings")
+    [ -n "$db" ] && { echo "$db"; exit 0; }
+fi
+
+cat "$GLOBAL_DB"

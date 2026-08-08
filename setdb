@@ -1,24 +1,37 @@
 #!/bin/bash
 
+ODOO_ROOT="$HOME/Dev/odoo"
+GLOBAL_DB="$HOME/.current_db"
+ODOO_CONF="$HOME/.odoorc"
+WS_SETTINGS=".wtenv"
+
 if [ $# -lt 1 ]; then
     >&2 echo "Needs 1 parameter (db_name)"
     exit 1
 fi
 
-root="$HOME/Dev/odoo"
-dir="$PWD"
-while [[ "$dir" == "$root" || "$dir" == "$root"/* ]]; do
-    if [ -f "$dir/.wtenv" ]; then
-        if grep -q '^db=' "$dir/.wtenv"; then
-            sed -i '' "s|^db=.*|db=$1|" "$dir/.wtenv"
-        else
-            echo "db=$1" >> "$dir/.wtenv"
-        fi
-        echo "$1 (workspace ${dir##*/})"
-        exit 0
-    fi
-    dir=$(dirname "$dir")
-done
+workspace_settings_here() {
+    local dir="$PWD"
+    while [[ "$dir" == "$ODOO_ROOT" || "$dir" == "$ODOO_ROOT"/* ]]; do
+        [ -f "$dir/$WS_SETTINGS" ] && { echo "$dir/$WS_SETTINGS"; return 0; }
+        dir=$(dirname "$dir")
+    done
+    return 1
+}
 
-[[ -f "$HOME/.odoorc" ]] && sed -i '' "s/db_name =.*/db_name = $1/g" "$HOME/.odoorc"
-echo "$1" > "$HOME/.current_db"
+set_key() {  # set_key <file> <key> <value>
+    if grep -q "^$2=" "$1"; then
+        sed -i '' "s|^$2=.*|$2=$3|" "$1"
+    else
+        echo "$2=$3" >> "$1"
+    fi
+}
+
+if settings=$(workspace_settings_here); then
+    set_key "$settings" db "$1"
+    echo "$1 (workspace $(basename "$(dirname "$settings")"))"
+    exit 0
+fi
+
+[ -f "$ODOO_CONF" ] && sed -i '' "s/db_name =.*/db_name = $1/g" "$ODOO_CONF"
+echo "$1" > "$GLOBAL_DB"
